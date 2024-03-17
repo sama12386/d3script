@@ -1,10 +1,10 @@
 # EosLink.py
+from time import sleep
 
 from gui.inputmap import *
 from d3 import *
 import d3script
-import d3script
-
+from scripts.pyosc.OSC import OSCServer, ThreadingOSCServer, ThreadingMixIn
 
 def _setEosPersistentValues(user,cueList,oscDeviceName):
     d3script.setPersistentValue('EosLinkUser', user)
@@ -109,7 +109,7 @@ def _buildEosBaseWidget(title, buttonLabel, action, baseWidget, includeLabelFlag
         
     baseWidget.pos = Vec2(baseWidget.pos[0], baseWidget.pos[1]-100)
 
-    d3gui.root.add(baseWidget)
+    return baseWidget
 
 
 def EosSendKey(key):
@@ -166,6 +166,8 @@ class EosCueDelete(Widget):
 
 
     def doCueDeletion(self):
+
+        d3script.log("CueDeletion", "running now")
 
         if (self.cuelist == '') or (self.cue == '') or (self.user == ''):
             d3script.log('EosLink','Missing list, cue, or user number.  Not sending a message.')
@@ -320,6 +322,153 @@ class EosCueCreator(Widget):
 
         self.close()
 
+
+class GetCuesFromCurrentTrack(Widget):
+    cue = ''
+    user = ''
+    cuelist = ''
+    label = ''
+    eosCuesFetchInProgress = False
+    eosCueListLength = 0
+    eosCueNumbers = []
+    eosCueDataReceivedCount = 0
+
+    oscServer = None
+
+    def __init__(self):
+
+        self.user, self.cuelist, self.oscDeviceName = _getEosPersistentValues()
+
+        self.oscDevices = resourceManager.allResources(OscDevice)
+        self.oscDeviceIndex = 0
+        for idx, item in enumerate(self.oscDevices):
+            if item.description == self.oscDeviceName:
+                self.oscDeviceIndex = idx
+                break
+
+        self.cue, self.label = _getTagAndNoteForSectionAtPlayhead()
+
+        Widget.__init__(self)
+
+        d3script.log('Eoslink', "test")
+
+        builtWidget = _buildEosBaseWidget('Scan44', 'Scan223', self.compareEosCuesWithCurrentTrack, self, True)
+
+        d3gui.root.add(builtWidget)
+
+    def compareEosCuesWithCurrentTrack(self):
+
+        self.getD3Cues()
+        self.eosGetAllCuesForList()
+
+    def getD3Cues(self):
+        d3script.log('Eoslink', "Getting Cues")
+
+        numberOfCues = state.track.tags.n()
+        d3script.log('wow', str(numberOfCues))
+
+        cueList = []
+
+        # Iterate through tag list and check if tag is a cue
+        for i in range(numberOfCues):
+            tagName = state.track.tags.getV(i)
+            if tagName.startswith("CUE"):
+                d3script.log("Found Cue", tagName)
+
+                cueNumber = tagName.split(' ')[1]
+
+                cueList.append(cueNumber)
+
+        return cueList
+
+    def inititateOscServer(self, oscDev):
+        d3script.log('Eoslink', "Initiating OSC Server")
+        d3script.log('IP', oscDev.sendIPAddress)
+        d3script.log('Port', str(oscDev.sendPort))
+
+        # socketServ = SocketServer.ThreadingMixIn
+
+        receiveIPAddress = "127.0.0.1"
+        d3script.log("receiveip", receiveIPAddress)
+
+        # oscServer = OSCServer((receiveIPAddress, oscDev.receivePort))
+
+        self.oscServer = ThreadingOSCServer((receiveIPAddress,8002))
+        d3script.log('Eoslink', "Finished Initiating OSC server")
+
+    def eosGetAllCuesForList(self):
+
+        d3script.log('Eoslink', "Starting to get eos cues")
+
+        if (self.cuelist == '') or (self.user == ''):
+            d3script.log('EosLink', 'Missing list, cue, or user number.  Not sending a message.')
+            self.close()
+            return
+
+        # Store Values for next time
+        _setEosPersistentValues(self.user, self.cuelist, self.oscDevices[self.oscDeviceIndex].description)
+
+        oscDev = self.oscDevices[self.oscDeviceIndex]
+
+        self.inititateOscServer(oscDev)
+
+        receiveCueCountAddress = "/eos/out/get/cue/" + self.cuelist + "/count"
+
+        self.oscServer.addMsgHandler(receiveCueCountAddress, self.processEosCueListLength)
+        self.oscServer.addMsgHandler("/eos/out/get/cuelist/", self.processEosCueData)
+        self.oscServer.addMsgHandler("/samtest", self.samtest)
+
+
+        # self.oscServer.serve_forever()
+
+        d3script.log("server", "osc server serving")
+
+
+        self.eosCuesFetchInProgress = True
+
+        # prefix = '/eos/user/' + self.user
+
+        msg = '/eos/get/cue/' + self.cuelist + '/count'
+        d3script.sendOscMessage(oscDev, msg)
+
+        # while self.eosCuesFetchInProgress:
+        #     d3script.log("EosFetch", "Fetch Still in progress")
+        #     sleep(0.01)
+
+        # Iterate through eos cuelist
+
+        d3script.log("Cue List Found Length", str(self.eosCueListLength))
+
+        for i in range(self.eosCueListLength):
+            msg = '/eos/get/cue/' + self.cuelist + '/index/' + i
+            d3script.sendOscMessage(oscDev, msg)
+
+
+        # while(self.eosCueListLength != self.eosCueDataReceivedCount):
+        #     d3script.log("eos", "Not matching. " + self.eosCueListLength + " expected and " + self.eosCueDataReceivedCount + " received.")
+        #     sleep(1.0)
+
+        d3script.log("Eos", "FINISHEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+
+        # d3script.log("Eoslink", firstCue)
+
+        # d3script.log("number of cues", str(len(cueList)))
+
+
+    def processEosCueListLength(self, length):
+        d3script.log("AAAAAAAAcue list length", str(length))
+        self.eosCueListLength = length
+        self.eosCuesFetchInProgress = False
+
+    def processEosCueData(self, data):
+
+        d3script.log("cue data: ", str(data))
+        # self.eosCueNumbers.appeand
+        self.eosCueDataReceivedCount += 1
+
+    def samtest(self):
+        d3script.log("samtest", "samtttttttttttttttttttttttttttttest")
+
     
 def createCueForCurrentSection():
     EosCueCreator()
@@ -329,6 +478,9 @@ def deleteCueForCurrentSection():
 
 def retriggerCuePopup():
     EosCueRetrigger()
+
+def getAllCuesFromCurrentTrack():
+    GetCuesFromCurrentTrack()
 
 def initCallback():
     d3script.log('EosLink','Initialized')
@@ -352,11 +504,18 @@ SCRIPT_OPTIONS = {
             "callback" : deleteCueForCurrentSection, # function to call for the script
         },
         {
-            "name" : "Retrigger Coe", # Display name of script
+            "name" : "Retrigger Cue", # Display name of script
             "group" : "EosLink", # Group to organize scripts menu.  Scripts menu is sorted a separated by group
             "bind_globally" : True, # binding should be global
             "help_text" : "Sends 'GO TO CUE ENTER' to retrigger eos and snap d3 in line", #text for help system
             "callback" : retriggerCuePopup, # function to call for the script
+        },
+        {
+            "name": "Get all d3 Cues",  # Display name of script
+            "group": "EosLink",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "bind_globally": True,  # binding should be global
+            "help_text": "Gets all d3 cues from current track",  # text for help system
+            "callback": getAllCuesFromCurrentTrack,  # function to call for the script
         }
         ]
 
