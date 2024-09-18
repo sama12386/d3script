@@ -17,8 +17,8 @@ import socket
 import win32com.client
 import win32api
 import win32con
+from scripts.pyosc.OSC import OSCClient, OSCMessage
 from gui.track.layerview import LayerSelection
-
 
 VK_CODE = {'backspace':0x08, 'tab':0x09, 'clear':0x0C, 'enter':0x0D, 'shift':0x10,'ctrl':0x11,'alt':0x12,'pause':0x13,
             'caps_lock':0x14,'esc':0x1B,'spacebar':0x20,'page_up':0x21,'page_down':0x22,'end':0x23,'home':0x24,'left_arrow':0x25,
@@ -49,7 +49,7 @@ SCRIPTBUTTONTITLE = 'Scripts'
 NOTESTORAGENAME = 'd3scriptstoragenote_donottouch'
 scripts = []
 scriptMods = []
-debugmode = False
+debugmode = True
 shell = win32com.client.Dispatch('WScript.Shell')
 
 #utility functions - should these move somewhere else?
@@ -80,35 +80,47 @@ def sendOscMessage(device,msg,param = None):
     as messages are only supported on Directors and Actors.
     """
 
-    log('d3script','Sending Eos msg: ' + msg + 'with param: ' + str(param))
-    
-    OSCAddrLength = math.ceil((len(msg)+1) / 4.0) * 4
-    packedMsg = struct.pack(">%ds" % (OSCAddrLength), str(msg))
+    client = OSCClient()
+    client.connect( (device.sendIPAddress, device.sendPort) )
 
-    if type(param) == str:
-        OSCTypeLength = math.ceil((len(',s')+1) / 4.0) * 4
-        packedType = struct.pack(">%ds" % (OSCTypeLength), str(',s'))
-        OSCArgLength = math.ceil((len(param)+1) / 4.0) * 4
-        packedParam = struct.pack(">%ds" % (OSCArgLength), str(param))
+    message = OSCMessage(msg)
 
-    elif type(param) == float:
-        OSCTypeLength = math.ceil((len(',f')+1) / 4.0) * 4
-        packedType = struct.pack(">%ds" % (OSCTypeLength), str(',f'))
-        packedParam  = struct.pack(">f", float(param))
+    if param is not None:
+        message.append(param)
 
-    elif type(param) == int:
-        OSCTypeLength = math.ceil((len(',f')+1) / 4.0) * 4
-        packedType = struct.pack(">%ds" % (OSCTypeLength), str(',i'))
-        packedParam  = struct.pack(">i", int(param))
+    client.send(message)
 
-    else:
-        packedType = ''
-        packedParam = ''
+    # log('d3script','Sending Eos msg: ' + msg + 'with param: ' + str(param))
 
-    oscMsg = packedMsg + packedType + packedParam
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(oscMsg, (device.sendIPAddress, device.sendPort))
-    time.sleep(0.1)
+
+
+    # OSCAddrLength = math.ceil((len(msg)+1) / 4.0) * 4
+    # packedMsg = struct.pack(">%ds" % (OSCAddrLength), str(msg))
+    #
+    # if type(param) == str:
+    #     OSCTypeLength = math.ceil((len(',s')+1) / 4.0) * 4
+    #     packedType = struct.pack(">%ds" % (OSCTypeLength), str(',s'))
+    #     OSCArgLength = math.ceil((len(param)+1) / 4.0) * 4
+    #     packedParam = struct.pack(">%ds" % (OSCArgLength), str(param))
+    #
+    # elif type(param) == float:
+    #     OSCTypeLength = math.ceil((len(',f')+1) / 4.0) * 4
+    #     packedType = struct.pack(">%ds" % (OSCTypeLength), str(',f'))
+    #     packedParam  = struct.pack(">f", float(param))
+    #
+    # elif type(param) == int:
+    #     OSCTypeLength = math.ceil((len(',f')+1) / 4.0) * 4
+    #     packedType = struct.pack(">%ds" % (OSCTypeLength), str(',i'))
+    #     packedParam  = struct.pack(">i", int(param))
+    #
+    # else:
+    #     packedType = ''
+    #     packedParam = ''
+    #
+    # oscMsg = packedMsg + packedType + packedParam
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # sock.sendto(oscMsg, (device.sendIPAddress, device.sendPort))
+    time.sleep(0.05)
 
 def getLayersOfTrackAtTime(trk,t):
     """
