@@ -49,15 +49,23 @@ def switchToTrack(track):
                 cmd.init(d3gui.root, currentTM, tk, 0, tk.transitionInfoAtBeat(0))
                 currentTM.addCommand(cmd)
                 break
-  
 
-def hardMuteLayers():
-    op = Undoable('deSequence Layers')
+
+def invertLayers():
+    op = Undoable('invertLayers')
     lays = d3script.getSelectedLayers()
 
     for lay in lays:
-        d3script.setExpression(lay,'brightness','0')
-        lay.name = 'MUTED ' + lay.name
+        d3script.setExpression(lay,'red min','1')
+        d3script.setExpression(lay,'red max','0')
+
+def unInvertLayers():
+    op = Undoable('unInvertLayers')
+    lays = d3script.getSelectedLayers()
+
+    for lay in lays:
+        d3script.setExpression(lay,'red min','self')
+        d3script.setExpression(lay,'red max','self')
 
 
 def hardUnMuteLayers():
@@ -66,8 +74,37 @@ def hardUnMuteLayers():
 
     for lay in lays:
         d3script.setExpression(lay,'brightness','self')
-        if (lay.name.find('MUTED') == 0):
-            lay.name = lay.name[6:]
+        if (lay.name.find('~~MUTED') == 0):
+            lay.name = lay.name[8:]
+        if(lay.name.find('~~HIGHLIGHT') == 0):
+            lay.name = lay.name[12:]
+
+def highlightLayers():
+    op = Undoable('highlight Layers')
+    selectedLayers = d3script.getSelectedLayers()
+
+    for layer in selectedLayers:
+        d3script.setExpression(layer,'brightness','1')
+        layer.name = '~~HIGHLIGHT ' + layer.name
+  
+
+def hardMuteLayers():
+    op = Undoable('deSequence Layers')
+    lays = d3script.getSelectedLayers()
+
+    for lay in lays:
+        d3script.setExpression(lay,'brightness','0')
+        lay.name = '~~MUTED ' + lay.name
+
+
+# def hardUnMuteLayers():
+#     op = Undoable('deSequence Layers')
+#     lays = d3script.getSelectedLayers()
+#
+#     for lay in lays:
+#         d3script.setExpression(lay,'brightness','self')
+#         if (lay.name.find('MUTED') == 0):
+#             lay.name = lay.name[6:]
 
 
 def duplicateSelectedLayers():
@@ -720,6 +757,27 @@ SCRIPT_OPTIONS = {
             "bind_globally" : True, # binding should be global
             "help_text" : "Sets brightness of layer back to self and removes MUTED label", #text for help system
             "callback" : hardUnMuteLayers, # function to call for the script
+        },
+        {
+            "name": "Invert Layers",  # Display name of script
+            "group": "Track Tools",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "bind_globally": True,  # binding should be global
+            "help_text": "Sets red_min to 1 and red_max to 0",  # text for help system
+            "callback": invertLayers,  # function to call for the script
+        },
+        {
+            "name": "Uninvert Layers",  # Display name of script
+            "group": "Track Tools",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "bind_globally": True,  # binding should be global
+            "help_text": "Sets red_min to 0 and red_max to 1",  # text for help system
+            "callback": unInvertLayers,  # function to call for the script
+        },
+        {
+            "name": "Highlight Layers",  # Display name of script
+            "group": "Track Tools",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "bind_globally": True,  # binding should be global
+            "help_text": "Sets brightness of layer back to 1",  # text for help system
+            "callback": highlightLayers,  # function to call for the script
         },
         {
             "name" : "Add Effect Layers to Selected Layers", # Display name of script

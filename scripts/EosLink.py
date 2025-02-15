@@ -59,15 +59,14 @@ def _getOscDeviceByName(name):
 
 
 def _buildEosBaseWidget(title, buttonLabel, action, baseWidget, includeLabelFlag):
-
     baseWidget.titleButton = TitleButton("EosLink: " + title)
     baseWidget.add(baseWidget.titleButton)
 
     oscDeviceNames = map(lambda l: l.description, baseWidget.oscDevices)
     baseWidget.oscDeviceBox = ValueBox(baseWidget, 'oscDeviceIndex', oscDeviceNames)
-    baseWidget.add(Field('OSC Device: ',baseWidget.oscDeviceBox))
+    baseWidget.add(Field('OSC Device: ', baseWidget.oscDeviceBox))
 
-    baseWidget.fieldWrapperWidget = CollapsableWidget('Cue Data','Cue Data')
+    baseWidget.fieldWrapperWidget = CollapsableWidget('Cue Data', 'Cue Data')
     baseWidget.fieldWrapperWidget.arrangeVertical()
     baseWidget.add(baseWidget.fieldWrapperWidget)
     baseWidget.fieldSectionWidget = Widget()
@@ -75,43 +74,43 @@ def _buildEosBaseWidget(title, buttonLabel, action, baseWidget, includeLabelFlag
     baseWidget.fieldWrapperWidget.add(baseWidget.fieldSectionWidget)
     baseWidget.labelWidget = Widget()
     baseWidget.valuesWidget = Widget()
-    baseWidget.valuesWidget.minSize = Vec2(50,0)
+    baseWidget.valuesWidget.minSize = Vec2(50, 0)
 
-    baseWidget.userEditBox = ValueBox(baseWidget,'user')
+    baseWidget.userEditBox = ValueBox(baseWidget, 'user')
     baseWidget.valuesWidget.add(baseWidget.userEditBox)
-    baseWidget.labelWidget.add(TextLabel('Eos User:').justify()) 
+    baseWidget.labelWidget.add(TextLabel('Eos User:').justify())
 
-    baseWidget.listEditBox = ValueBox(baseWidget,'cuelist')
+    baseWidget.listEditBox = ValueBox(baseWidget, 'cuelist')
     baseWidget.valuesWidget.add(baseWidget.listEditBox)
     baseWidget.labelWidget.add(TextLabel('Eos List:').justify())
 
-    baseWidget.cueEditBox = ValueBox(baseWidget,'cue')
+    baseWidget.cueEditBox = ValueBox(baseWidget, 'cue')
     baseWidget.cueEditBox.textBox.returnAction.add(action)
     baseWidget.valuesWidget.add(baseWidget.cueEditBox)
-    baseWidget.labelWidget.add(TextLabel('Cue Number:').justify()) 
+    baseWidget.labelWidget.add(TextLabel('Cue Number:').justify())
 
     if (includeLabelFlag):
-        baseWidget.labelEditBox = ValueBox(baseWidget,'label')
+        baseWidget.labelEditBox = ValueBox(baseWidget, 'label')
         baseWidget.labelEditBox.textBox.returnAction.add(action)
         baseWidget.valuesWidget.add(baseWidget.labelEditBox)
-        baseWidget.labelWidget.add(TextLabel('Cue Label:').justify()) 
+        baseWidget.labelWidget.add(TextLabel('Cue Label:').justify())
 
     baseWidget.labelWidget.arrangeVertical()
     baseWidget.valuesWidget.arrangeVertical()
-        
+
     baseWidget.fieldSectionWidget.add(baseWidget.labelWidget)
     baseWidget.fieldSectionWidget.add(baseWidget.valuesWidget)
     baseWidget.computeAllMinSizes()
     baseWidget.arrangeVertical()
 
     doButton = Button(buttonLabel, action)
-    doButton.border = Vec2(0,10)
+    doButton.border = Vec2(0, 10)
     baseWidget.add(doButton)
-    baseWidget.pos = (d3gui.root.size / 2) - (baseWidget.size/2)
-        
-    baseWidget.pos = Vec2(baseWidget.pos[0], baseWidget.pos[1]-100)
+    baseWidget.pos = (d3gui.root.size / 2) - (baseWidget.size / 2)
 
-    return baseWidget
+    baseWidget.pos = Vec2(baseWidget.pos[0], baseWidget.pos[1] - 100)
+
+    d3gui.root.add(baseWidget)
 
 
 def EosSendKey(key):
@@ -325,6 +324,16 @@ class EosCueCreator(Widget):
         self.close()
 
 
+
+
+
+
+
+
+
+
+
+
 class GetCuesFromCurrentTrack(Widget):
     cue = ''
     user = ''
@@ -471,7 +480,40 @@ class GetCuesFromCurrentTrack(Widget):
     def samtest(self):
         d3script.log("samtest", "samtttttttttttttttttttttttttttttest")
 
-    
+
+
+
+def retriggerCueWithoutConfirmation():
+
+    user, cuelist, oscDeviceName = _getEosPersistentValues()
+
+    oscDevices = resourceManager.allResources(OscDevice)
+    oscDeviceIndex = 0
+    for idx, item in enumerate(oscDevices):
+        if item.description == oscDeviceName:
+            oscDeviceIndex = idx
+            break
+
+    oscDev = oscDevices[oscDeviceIndex]
+
+    prefix = '/eos/user/' + user
+
+    # clear the cmd line
+    msg = prefix + '/key/clear_cmdline'
+    d3script.sendOscMessage(oscDev, msg)
+
+    # go into blind
+    msg = prefix + '/key/go_to_cue'
+    d3script.sendOscMessage(oscDev, msg)
+
+    # We send enter twice to confirm new cue creation.  If cue exists it has no effect.
+    msg = prefix + '/key/enter'
+    d3script.sendOscMessage(oscDev, msg)
+
+    msg = prefix + '/key/clear_cmdline'
+    d3script.sendOscMessage(oscDev, msg)
+
+
 def createCueForCurrentSection():
     EosCueCreator()
 
@@ -511,6 +553,13 @@ SCRIPT_OPTIONS = {
             "bind_globally" : True, # binding should be global
             "help_text" : "Sends 'GO TO CUE ENTER' to retrigger eos and snap d3 in line", #text for help system
             "callback" : retriggerCuePopup, # function to call for the script
+        },
+{
+            "name" : "Retrigger Cue No Confirm", # Display name of script
+            "group" : "EosLink", # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "bind_globally" : True, # binding should be global
+            "help_text" : "Sends 'GO TO CUE ENTER' to retrigger eos and snap d3 in line", #text for help system
+            "callback" : retriggerCueWithoutConfirmation, # function to call for the script
         },
         {
             "name": "Get all d3 Cues",  # Display name of script

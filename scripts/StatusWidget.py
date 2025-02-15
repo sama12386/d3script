@@ -261,22 +261,22 @@ SCRIPT_OPTIONS = {
             "help_text": "Toggle Transport State",  # text for help system
             "callback": toggleDirectorEngaged,  # function to call for the script
         },
-        # {
-        #     "name": "Toggle Transport3",  # Display name of script
-        #     "group": "Status Widget",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
-        #     "binding": "MouseClick,None,XButton1",  # Keyboard shortcut
-        #     "bind_globally": True,  # binding should be global
-        #     "help_text": "Toggle Transport State",  # text for help system
-        #     "callback": toggleDirectorEngaged,  # function to call for the script
-        # },
-        # {
-        #     "name": "Toggle Transport4",  # Display name of script
-        #     "group": "Status Widget",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
-        #     "binding": "MouseClick,None,Mouse8",  # Keyboard shortcut
-        #     "bind_globally": True,  # binding should be global
-        #     "help_text": "Toggle Transport State",  # text for help system
-        #     "callback": toggleDirectorEngaged,  # function to call for the script
-        # },
+        {
+            "name": "LockToNetwork2",  # Display name of script
+            "group": "Status Widget",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "binding": "KeyPress,Ctrl+Alt,0",  # Keyboard shortcut
+            "bind_globally": True,  # binding should be global
+            "help_text": "Toggle Transport State",  # text for help system
+            "callback": toggleLockToNetwork,  # function to call for the script
+        },
+        {
+            "name": "DirectorToEditor2",  # Display name of script
+            "group": "Status Widget",  # Group to organize scripts menu.  Scripts menu is sorted a separated by group
+            "binding": "KeyPress,Ctrl+Alt,9",  # Keyboard shortcut
+            "bind_globally": True,  # binding should be global
+            "help_text": "Bring Director To Editor Playhead",  # text for help system
+            "callback": BringDirectorToEditorPlayhead,  # function to call for the script
+        },
         {
             "name" : "Toggle Ltc Transport", # Display name of script
             "group" : "Status Widget", # Group to organize scripts menu.  Scripts menu is sorted a separated by group

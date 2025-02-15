@@ -1,5 +1,6 @@
 # Helper api for d3/disguise scripting
 # Dan Scully, 2022
+# Modified in part by Sam Molitoriss
 # No license yet
 # Some code clearly copy/pasted from RGM
 
