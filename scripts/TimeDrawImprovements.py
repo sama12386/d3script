@@ -5,6 +5,10 @@ def initCallback():
     d3script.log("TimelineDrawImprovements","TimelineDrawImprovements Loaded")
 
 def _renderToDisplayList(view, layer, isSelected):
+
+    dir(view)
+    d3script.log("dirdir", "dirdirdir")
+
     view.LAYER_RENDER_HEIGHT = 22 * d3gui.dpiScale.x
     displayList = layer.subdl
     displayList.clear()
@@ -13,7 +17,7 @@ def _renderToDisplayList(view, layer, isSelected):
     layerColour = layer.colour.mix(whiteMix, 0.2) if isEditorOpened else layer.colour
     
     if isSelected:
-        displayList.quadRounded(DxMaterial.alpha, Rect(Vec2(0, 0), layer.size), Colour(1,1,0), Rect(3, 3, 3, 3), Rect(0, 0, 1, 1))
+        displayList.quadRounded(DxMaterial.alpha, Rect(Vec2(0, 0), layer.size), Colour(0,1,1), Rect(3, 3, 3, 3), Rect(0, 0, 1, 1))
         displayList.quadRounded(DxMaterial.alpha, Rect(Vec2(2, 2), layer.size - Vec2(4, 4)), layerColour, Rect(3, 3, 3, 3), Rect(0, 0, 1, 1))
     else:
         displayList.quadRounded(DxMaterial.alpha, Rect(Vec2(0, 0), layer.size), layerColour, Rect(3, 3, 3, 3), Rect(0, 0, 1, 1))
@@ -52,7 +56,7 @@ def _renderToDisplayList(view, layer, isSelected):
         if t0 < t1:
             x0 = bw.tToX(t0) - lx
             x1 = bw.tToX(t1) - lx
-            col = col.mix(whiteMix, 0.25)
+            col = col.mix(whiteMix, 0.66)
             col.a = 0.75
             displayList.quadRounded(DxMaterial.alpha, Rect(Vec2(x0 + 2, 5), Vec2(x1 - x0 - 4, view.LAYER_RENDER_HEIGHT - 10)), col, Rect(2, 2, 2, 2), Rect(0, 0, 1, 1))
 
@@ -68,7 +72,7 @@ def _renderToDisplayList(view, layer, isSelected):
     expandIconOffset = d3gui.dpiScale.x * 4
     textOffset = d3gui.dpiScale.x * 4
     iconCol = colours('layer_endbuttons')
-    keyCol = Colour(0.35,0.35,0.35,1)
+    keyCol = Colour(0.43,0.56,1.0,1)
 
     realLayer = d3script.getTrackWidget().layerView.presentationModel.getLayerObjectFromID(layer.id)
     keys = []
@@ -80,7 +84,15 @@ def _renderToDisplayList(view, layer, isSelected):
     
     for key in keys:
         displayList.quad(view.endMaterial, Rect(Vec2(bw.tToX(key.localT - layer.start) - view.END_BITMZP_SIZE.x/2 -1,(6 * d3gui.dpiScale.x)), view.END_BITMZP_SIZE*1.3), keyCol, Rect(0, 0, 1, 1))
-        displayList.quad(view.endMaterial, Rect(Vec2(bw.tToX(key.localT - layer.start)  - view.END_BITMZP_SIZE.x/2+2,(6 * d3gui.dpiScale.x)), view.END_BITMZP_SIZE*1.3), keyCol, Rect(0, 0, -1, 1))
+        # displayList.quad(view.endMaterial, Rect(Vec2(bw.tToX(key.localT - layer.start)  - view.END_BITMZP_SIZE.x/2+2,(6 * d3gui.dpiScale.x)), view.END_BITMZP_SIZE*1.3), keyCol, Rect(0, 0, -1, 1))
+
+        # displayList.quad(view.endMaterial, Rect(Vec2(bw.tToX(key.localT - layer.start) - view.END_BITMZP_SIZE.x/2 -1,(6 * d3gui.dpiScale.x)), view.END_BITMZP_SIZE*1.3), keyCol, Rect(0, 0, 1, 1))
+        # displayList.quad(view.endMaterial, Rect(Vec2(bw.tToX(key.localT - layer.start)  - view.END_BITMZP_SIZE.x/2+2,(6 * d3gui.dpiScale.x)), view.END_BITMZP_SIZE*1.3), keyCol, Rect(0, 0, -1, 1))
+
+
+
+
+
 
     if isSelected:
         displayList.quad(view.endMaterial, Rect(Vec2(), view.END_BITMZP_SIZE), iconCol, Rect(0, 0, 1, 1))

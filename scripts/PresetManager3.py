@@ -73,18 +73,21 @@ class PMPreset():
 
         curTRender = state.player.tRender
         trk = state.track
-        
+
+        d3script.log("PresetManager3", "Applying preset")
 
         
         for valueSet in self.fieldValues:
             modifyFields = []
 
             if valueSet['field'] == '<opensequence>':
+                d3script.log("PresetManager3", "If selected")
                 oles = d3script.getTrackWidget().layerView.openEditorManager.openLayerEditors
                 for ole in oles.values():  
                     modifyFields += [fw.fieldSequence for fw in ole.selectedFieldWrappers if (fw.fieldSequence.type == float)]
 
             else:
+                d3script.log("PresetManager3", "Else selected")
                 for lay in d3script.getSelectedLayers():
                     modifyFields += [f for f in lay.fields if (f.name == valueSet['field']) and (f.type == float)]
 
